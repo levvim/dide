@@ -1,0 +1,407 @@
+FROM ubuntu:16.04
+MAINTAINER Levi Mangarin "markmangarin@gmail.com"
+
+# Run commands
+#/run_jupyter.sh for jupyter notebook
+################################################################################
+# Install necessary software
+################################################################################
+# Python, R, Java 8, Keras/Tensorflow, Base dependencies
+## Basic image utilities
+RUN apt-get update \
+    && apt-get install -y --force-yes software-properties-common \
+    && echo "deb http://cran.rstudio.com/bin/linux/ubuntu xenial/" | tee -a /etc/apt/sources.list \
+    && gpg --keyserver keyserver.ubuntu.com --recv-key E084DAB9 \
+    && gpg -a --export E084DAB9 | apt-key add - \
+    && add-apt-repository ppa:openjdk-r/ppa \
+    && apt-get update \
+    && apt-get clean \
+    && apt-get install -qqy software-properties-common git wget curl openssh-client unzip vim gcc gawk sed coreutils sudo net-tools r-base r-base-dev openjdk-8-jdk zlib1g-dev libncursesw5-dev libncurses5-dev maven g++ zlib1g-dev build-essential gcc python-setuptools python-dev python3-docutils python3-flask python3-pip python tabix libz-dev vcftools libcurl4-openssl-dev libssl-dev make libhdf5-dev libhdf5-serial-dev xorg tmux \
+    python-dev python-pip python-setuptools python-virtualenv python-wheel pkg-config libopenblas-base python3-numpy python3-scipy python3-h5py python3-yaml  python3-pydot fim
+
+#################################################################################
+### Keras/Tensorflow/Python stats env
+#RUN python3 -m pip install --upgrade pip \
+#    && python3 -m pip install pandas numpy statsmodels scikit-learn sklearn matplotlib seaborn ipython ipykernel jupyter jupyter-kernel-gateway jupyter-tensorboard pyyaml tqdm \
+## manually update numpy
+#RUN python3 pip --no-cache-dir install -U numpy==1.13.3
+
+#ARG TENSORFLOW_VERSION=1.5.0
+#ARG TENSORFLOW_DEVICE=gpu
+#ARG TENSORFLOW_APPEND=_gpu
+#RUN pip3 --no-cache-dir install https://storage.googleapis.com/tensorflow/linux/${TENSORFLOW_DEVICE}/tensorflow${TENSORFLOW_APPEND}-${TENSORFLOW_VERSION}-cp35-cp35m-linux_x86_64.whl
+#
+## Install py3-th-cpu/gpu (Python 3, Theano, CPU/GPU)
+#ARG THEANO_VERSION=1.0.1
+#ENV THEANO_FLAGS='device=cpu,floatX=float32'
+#RUN pip3 --no-cache-dir install git+https://github.com/Theano/Theano.git@rel-${THEANO_VERSION}
+#
+## install py3-cntk-cpu/gpu (Python 3, CNTK, CPU/GPU)
+#ARG CNTK_VERSION=2.4
+#ARG CNTK_DEVICE=GPU
+#RUN pip3 --no-cache-dir install https://cntk.ai/PythonWheel/${CNTK_DEVICE}/cntk-${CNTK_VERSION}-cp35-cp35m-linux_x86_64.whl
+#
+## install Keras for Python 3
+#ARG KERAS_VERSION=2.1.4
+#ENV KERAS_BACKEND=tensorflow
+#RUN pip3 --no-cache-dir install --no-dependencies git+https://github.com/fchollet/keras.git@${KERAS_VERSION}
+#
+#RUN apt-get update -qq \
+# && apt-get install --no-install-recommends -y \
+#    # system tools
+#    less \
+#    procps \
+#    vim-tiny \
+#    # build dependencies
+#    build-essential \
+#    libffi-dev \
+#    # visualization (Python 2 and 3)
+#    python-matplotlib \
+#    python-pillow \
+#    python3-matplotlib \
+#    python3-pillow \
+# && apt-get clean \
+# && rm -rf /var/lib/apt/lists/*
+#
+## install additional python packages
+#RUN pip --no-cache-dir install \
+#    # jupyter notebook and ipython (Python 2)
+#    ipython \
+#    ipykernel \
+#    jupyter \
+#    jupyter-kernel-gateway \
+#    jupyter-tensorboard \
+#    # data analysis (Python 2)
+#    pandas \
+#    scikit-learn \
+#    statsmodels \
+# && python -m ipykernel.kernelspec \
+# && pip3 --no-cache-dir install \
+#    # jupyter notebook and ipython (Python 3)
+#    ipython \
+#    ipykernel \
+#    # data analysis (Python 3)
+#    pandas \
+#    scikit-learn \
+#    statsmodels \
+# && python3 -m ipykernel.kernelspec
+#
+## configure console
+#RUN echo 'alias ll="ls --color=auto -lA"' >> /root/.bashrc \
+#    && echo '"\e[5~": history-search-backward' >> /root/.inputrc \
+#    && echo '"\e[6~": history-search-forward' >> /root/.inputrc
+#ENV SHELL=/bin/bash
+#
+## quick test and dump package lists
+#RUN jupyter notebook --version \
+# && jupyter nbextension list 2>&1 \
+# && python -c "import numpy; print(numpy.__version__)" \
+# && python -c "import tensorflow; print(tensorflow.__version__)" \
+# && python -c "import theano; print(theano.__version__)" \
+# && python -c "import cntk; print(cntk.__version__)" \
+# && MPLBACKEND=Agg python -c "import matplotlib.pyplot" \
+# && python3 -c "import numpy; print(numpy.__version__)" \
+# && python3 -c "import tensorflow; print(tensorflow.__version__)" \
+# && python3 -c "import theano; print(theano.__version__)" \
+# && python3 -c "import cntk; print(cntk.__version__)" \
+# && MPLBACKEND=Agg python3 -c "import matplotlib.pyplot" \
+# && rm -rf /tmp/* \
+# && dpkg-query -l > /dpkg-query-l.txt \
+# && pip2 freeze > /pip2-freeze.txt \
+# && pip3 freeze > /pip3-freeze.txt
+#
+## run as user 1000
+#RUN useradd --create-home --uid 1000 --user-group --groups video --shell /bin/bash user \
+# && cp -a /root/.jupyter /root/.local /home/user \
+# && chown -R user:user /home/user /srv
+#USER user
+#
+## only password authentication (password: keras)
+##ENV PASSWD='sha1:98b767162d34:8da1bc3c75a0f29145769edc977375a373407824'
+##unset ENV TOKEN=
+## password and token authentication (password and token: keras)
+#ENV PASSWD='sha1:98b767162d34:8da1bc3c75a0f29145769edc977375a373407824'
+#ENV TOKEN='keras'
+## random token authentication
+##unset ENV PASSWD=
+##unset ENV TOKEN=
+#
+## Jupyter and Tensorboard ports
+#EXPOSE 8888 6006
+#
+#RUN apt-get update --fix-missing
+
+################################################################################
+# R setup (packages)
+
+#RUN apt-get update \ 
+#	&& apt-get install -y --no-install-recommends \
+#		ed \
+#		less \
+#		locales \
+#		vim-tiny \
+#		wget \
+#		ca-certificates \
+#		fonts-texgyre \
+#	&& rm -rf /var/lib/apt/lists/*
+#
+### Configure default locale, see https://github.com/rocker-org/rocker/issues/19
+#RUN echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen \
+#	&& locale-gen en_US.utf8 \
+#	&& /usr/sbin/update-locale LANG=en_US.UTF-8
+#
+#RUN echo "deb [trusted=yes] https://eddelbuettel.github.io/drr35/ ./" > /etc/apt/sources.list.d/debian-r-3.5.list 
+#ENV R_BASE_VERSION 3.5.0
+#
+#RUN apt-get update \
+#	&& apt-get install -y --no-install-recommends \
+#		littler \
+#                r-cran-littler \
+#		r-base=${R_BASE_VERSION}-* \
+#		r-base-dev=${R_BASE_VERSION}-* \
+#		r-recommended=${R_BASE_VERSION}-* \
+#        && echo 'options(repos = c(CRAN = "https://cloud.r-project.org/"), download.file.method = "libcurl")' >> /etc/R/Rprofile.site \
+#        && echo 'source("/etc/R/Rprofile.site")' >> /etc/littler.r \
+#	&& ln -s /usr/lib/R/site-library/littler/examples/install.r /usr/local/bin/install.r \
+#	&& ln -s /usr/lib/R/site-library/littler/examples/install2.r /usr/local/bin/install2.r \
+#	&& ln -s /usr/lib/R/site-library/littler/examples/installGithub.r /usr/local/bin/installGithub.r \
+#	&& ln -s /usr/lib/R/site-library/littler/examples/testInstalled.r /usr/local/bin/testInstalled.r \
+#	&& install.r docopt \
+#	&& rm -rf /tmp/downloaded_packages/ /tmp/*.rds \
+#	&& rm -rf /var/lib/apt/lists/*
+#
+#
+#  && install2.r --error \
+#    --deps TRUE \
+#    tidyverse \
+#	tidyr \
+#    dplyr \
+#    ggplot2 \
+#    devtools \
+#    formatR \
+#    remotes \
+#    selectr \
+#    caTools \
+#	sqldf \
+#	xgboost \
+#	randomForest \
+#	gplots \
+#	ggthemes \
+#	RColorBrewer \
+#	ComplexHeatmap \
+#	GSVA \
+#	ggrepel \
+#	forecast
+
+RUN apt-get update -qq && apt-get -y --no-install-recommends install \
+  libxml2-dev \
+  libcairo2-dev \
+  libsqlite3-dev \
+  libmariadbd-dev \
+  libmariadb-client-lgpl-dev \
+  libpq-dev \
+  libssh2-1-dev \
+  unixodbc-dev
+
+RUN R -e "source('https://bioconductor.org/biocLite.R')" \
+    && Rscript -e "install.packages('tidyverse')" \
+    && Rscript -e "install.packages('tidyr')" \
+    && Rscript -e "install.packages('dplyr')" \
+    && Rscript -e "install.packages('ggplot2')" \
+    && Rscript -e "install.packages('devtools')" \
+    && Rscript -e "install.packages('formatR')" \
+    && Rscript -e "install.packages('remotes')" \
+    && Rscript -e "install.packages('selectr')" \
+    && Rscript -e "install.packages('caTools')" \
+    && Rscript -e "install.packages('sqldf')" \
+    && Rscript -e "install.packages('xgboost')" \
+    && Rscript -e "install.packages('randomForest')" \
+    && Rscript -e "install.packages('gplots')" \
+    && Rscript -e "install.packages('ggthemes')" \
+    && Rscript -e "install.packages('RColorBrewer')" \
+    && Rscript -e "install.packages('ComplexHeatmap')" \
+    && Rscript -e "install.packages('GSVA')" \
+    && Rscript -e "install.packages('ggrepel')" \
+    && Rscript -e "install.packages('forecast')"
+
+###########################################################################
+# Base vim setup
+# User config
+# Install Pathogen
+RUN mkdir -p ~/.vim/autoload/ ~/.vim/bundle/ ~/.vim_runtime/temp_dirs \
+    && wget https://raw.githubusercontent.com/tpope/vim-pathogen/master/autoload/pathogen.vim \
+    -O ~/.vim/autoload/pathogen.vim \
+    && echo "execute pathogen#infect()" \
+    >> ~/.vimrc \
+    && echo "filetype plugin indent on" \
+    >> ~/.vimrc \
+    && echo "syntax on" \
+    >> ~/.vimrc
+
+#RUN  mkdir -p \
+#    $UHOME/bundle \
+#    $UHOME/.vim/autoload \
+#    $UHOME/.vim_runtime/temp_dirs \
+#    && curl -LSso \
+#    $UHOME/.vim/autoload/pathogen.vim \
+#    https://tpo.pe/pathogen.vim \
+#    && echo "execute pathogen#infect('$UHOME/bundle/{}')" \
+#    > $UHOME/.vimrc \
+#    && echo "syntax on " \
+#    >> $UHOME/.vimrc \
+#    && echo "filetype plugin indent on " \
+#    >> $UHOME/.vimrc \
+#    && echo "execute pathogen#infect('$UHOME/bundle/{}')" \
+#    > $UHOME/.vimrc \
+#    && echo "syntax on " \
+#    >> $UHOME/.vimrc \
+#    && echo "filetype plugin indent on " \
+#    >> $UHOME/.vimrc \
+#    && echo "execute pathogen#infect('$UHOME/bundle/{}')" \
+#    > $UHOME/.vimrc \
+#    && echo "syntax on " \
+#    >> $UHOME/.vimrc \
+#    && echo "filetype plugin indent on " \
+#    >> $UHOME/.vimrc
+
+## Vim plugins deps
+#RUN apk --update add \
+#    bash \
+#    ctags \
+#    curl \
+#    git \
+#    ncurses-terminfo \
+#    python \
+## YouCompleteMe
+#    && apk add --virtual build-deps \
+#    build-base \
+#    cmake \
+#    go \
+#    llvm \
+#    perl \
+#    python-dev \
+#    && git clone --depth 1  https://github.com/Valloric/YouCompleteMe \
+#    $UHOME/bundle/YouCompleteMe/ \
+#    && cd $UHOME/bundle/YouCompleteMe \
+#    && git submodule update --init --recursive \
+#    && $UHOME/bundle/YouCompleteMe/install.py --gocode-completer \
+## Install and compile procvim.vim
+#    && git clone --depth 1 https://github.com/Shougo/vimproc.vim \
+#    $UHOME/bundle/vimproc.vim \
+#    && cd $UHOME/bundle/vimproc.vim \
+#    && make \
+#    && chown $UID:$GID -R $UHOME \
+## Cleanup
+#    && apk del build-deps \
+#    && apk add \
+#    libxt \
+#    libx11 \
+#    libstdc++ \
+#    && rm -rf \
+#    $UHOME/bundle/YouCompleteMe/third_party/ycmd/clang_includes \
+#    $UHOME/bundle/YouCompleteMe/third_party/ycmd/cpp \
+#    /usr/lib/go \
+#    /var/cache/* \
+#    /var/log/* \
+#    /var/tmp/* \
+#    && mkdir /var/cache/apk
+
+# Plugins
+RUN cd ~/.vim/bundle/ \
+    #&& git clone --depth 1 https://github.com/pangloss/vim-javascript \
+    && git clone --depth 1 https://github.com/scrooloose/nerdcommenter \
+    #&& git clone --depth 1 https://github.com/godlygeek/tabular \
+    #&& git clone --depth 1 https://github.com/Raimondi/delimitMate \
+    #&& git clone --depth 1 https://github.com/nathanaelkane/vim-indent-guides \
+    && git clone --depth 1 https://github.com/groenewege/vim-less \
+    #&& git clone --depth 1 https://github.com/othree/html5.vim \
+    && git clone --depth 1 https://github.com/elzr/vim-json \
+    && git clone --depth 1 https://github.com/bling/vim-airline \
+    && git clone --depth 1 https://github.com/easymotion/vim-easymotion \
+    && git clone --depth 1 https://github.com/mbbill/undotree \
+    #&& git clone --depth 1 https://github.com/majutsushi/tagbar \
+    && git clone --depth 1 https://github.com/vim-scripts/EasyGrep \
+    && git clone --depth 1 https://github.com/jlanzarotta/bufexplorer \
+    && git clone --depth 1 https://github.com/kien/ctrlp.vim \
+    && git clone --depth 1 https://github.com/scrooloose/nerdtree \
+    && git clone --depth 1 https://github.com/jistr/vim-nerdtree-tabs \
+    && git clone --depth 1 https://github.com/scrooloose/syntastic \
+    && git clone --depth 1 https://github.com/tomtom/tlib_vim \
+    && git clone https://github.com/ashisha/image.vim ~/.vim/bundle/image.vim \
+    && git clone --depth 1 https://github.com/marcweber/vim-addon-mw-utils \
+    #&& git clone --depth 1 https://github.com/vim-scripts/taglist.vim \
+    && git clone --depth 1 https://github.com/terryma/vim-expand-region \
+    && git clone --depth 1 https://github.com/tpope/vim-fugitive \
+    && git clone --depth 1 https://github.com/airblade/vim-gitgutter \
+    #&& git clone --depth 1 https://github.com/fatih/vim-go \
+    && git clone --depth 1 https://github.com/plasticboy/vim-markdown \
+    && git clone --depth 1 https://github.com/michaeljsmith/vim-indent-object \
+    && git clone --depth 1 https://github.com/terryma/vim-multiple-cursors \
+    && git clone --depth 1 https://github.com/tpope/vim-repeat \
+    && git clone --depth 1 https://github.com/tpope/vim-surround \
+    && git clone --depth 1 https://github.com/vim-scripts/mru.vim \
+    #&& git clone --depth 1 https://github.com/vim-scripts/YankRing.vim \
+    && git clone --depth 1 https://github.com/tpope/vim-haml \
+    && git clone --depth 1 https://github.com/SirVer/ultisnips \
+    && git clone --depth 1 https://github.com/honza/vim-snippets \
+    #&& git clone --depth 1 https://github.com/derekwyatt/vim-scala \
+    && git clone --depth 1 https://github.com/christoomey/vim-tmux-navigator \
+    && git clone --depth 1 https://github.com/jalvesaq/Nvim-R \
+    && git clone --depth 1 https://github.com/ekalinin/Dockerfile.vim
+
+# Theme
+RUN cd ~/.vim/bundle/ \
+    && git clone --depth 1 https://github.com/altercation/vim-colors-solarized
+
+# Build default .vimrc
+RUN  mv -f ~/.vimrc ~/my.vimrc \
+     && curl -s \
+     https://raw.githubusercontent.com/levvim/dotvim/master/vimrc \
+     >> ~/.vimrc \
+     && cat ~/my.vimrc \
+     >> ~/.vimrc
+
+# Pathogen help tags generation
+RUN vim -E -c 'execute pathogen#helptags()' -c q ; return 0
+
+ENV TERM=xterm-256color
+
+# List of Vim plugins to disable
+ENV DISABLE=""
+
+################################################################################
+# Configure Nvim
+RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    add-apt-repository -y ppa:neovim-ppa/unstable && \
+    apt-get update && \
+    apt-get install -y neovim python-dev python-pip
+
+RUN pip install --user neovim Pillow
+
+RUN mkdir -p ~/.config/nvim/ \
+    && cp -r ~/.vim/* ~/.config/nvim/  \
+    && echo "set runtimepath^=~/.vim runtimepath+=~/.vim/after" >> ~/.vimrc \
+    && echo "let &packpath = &runtimepath" >> ~/.vimrc \
+    && ln -s ~/.vimrc ~/.config/nvim/init.vim
+
+#RUN mkdir -p ~/.config/nvim/ \
+#    && echo "set runtimepath^=~/.vim runtimepath+=~/.vim/after" >> ~/.config/nvim/init.vim \
+#    && echo "let &packpath = &runtimepath" >> ~/.config/nvim/init.vim \
+#    && echo "source ~/.vimrc" >> ~/.config/nvim/init.vim \
+#    && ln -s ~/.vim ~/.config/nvim  \
+#    && rm ~/.vimrc \
+#    && ln -s ~/.config/nvim/init.vim ~/.vimrc
+
+################################################################################
+# Configure the image (i.e. set up Snakefile, scripts, reference data and project data)
+################################################################################
+## Set environment variables
+ENV HOME /root
+ENV PATH="usr/local/bin:${PATH}"
+ENV CLASSPATH="/gatk/target/GenomeAnalysisTK.jar:$CLASSPATH"
+
+################################################################################
+# List filetree before execution
+WORKDIR /
+RUN ls -alR | grep ":$" | sed -e 's/:$//' -e 's/[^-][^\/]*\//--/g' -e 's/^/   /' -e 's/-/|/' > filetree_origin.txt
